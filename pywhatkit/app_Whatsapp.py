@@ -11,7 +11,7 @@ import pyperclip
 import keyboard
 from pywhatkit.core import core, exceptions, log
 from typing import Union
-
+import streamlit as st
 pg.FAILSAFE = False
 
 core.check_connection()
@@ -508,51 +508,77 @@ def format_phone_number(country, mobile):
 
     
     return mobile
-
-# Create an empty list to store the formatted phone numbers
+import csv
 formatted_numbers = []
+a = ""
+def process_phone_numbers(a):
+    # Create an empty list to store the formatted phone numbers
+    # Open the CSV file and process each line
+    with open(a, 'r') as csvfile:
+        reader = csv.reader(csvfile)
+        #print(reader)
+        for row in reader:
+            print(row)
+            if len(row) == 2:
+                country, mobile = row
+                print(1213)
+                print(country, mobile)
+                formatted_mobile = format_phone_number(country, mobile)
+                print(formatted_mobile)
+                if formatted_mobile:
+                    formatted_numbers.append(formatted_mobile)
 
-# Open the CSV file and process each line
-with open('/home/aisoftbuilders/Desktop/PyWhatKit/pywhatkit/ali - test campaign.csv', 'r') as csvfile:
-    reader = csv.reader(csvfile)
-    for row in reader:
-        if len(row) == 2:
-            country, mobile = row
-            formatted_mobile = format_phone_number(country, mobile)
-            if formatted_mobile:
-                formatted_numbers.append(formatted_mobile)
+    # Your list of strings
 
-# Print the formatted phone numbers
-for number in formatted_numbers:
-    print(number)
+    # Iterate through the list and add '+' if missing
+    for i in range(len(formatted_numbers)):
+        if not formatted_numbers[i].startswith('+'):
+            formatted_numbers[i] = '+' + formatted_numbers[i]
 
+    #formaformatted_numbers
 
-# Your list of strings
+    print(formatted_numbers)
+    # Remove values that don't start with '+971'
+    Uae_nos = [number for number in formatted_numbers if number.startswith('+971')]
 
+    return Uae_nos  # Return the formatted numbers
 
-# Iterate through the list and add '+' if missing
-for i in range(len(formatted_numbers)):
-    if not formatted_numbers[i].startswith('+'):
-        formatted_numbers[i] = '+' + formatted_numbers[i]
+def send_whatsapp_messages(numbers, massage):
+    for i, n in enumerate(formatted_numbers):
+        try:
+            if i >= 127:  # Start after the 120th iteration
+                sendwhatmsg_instantly(n, massage, 0, True, 3)
+                print(f"Message sent to {n}")
+        except Exception as e:
+            print(f"Failed to send message to {n} with error: {str(e)}")
+        print(i)
 
-formatted_numbers.pop(0)
+def main():
+    st.title("WhatsApp Messaging App")
 
-# Print the updated list
-print(formatted_numbers)
-print(formatted_numbers)
-Uae_nos = formatted_numbers
-# Remove values that don't start with '+971'
-Uae_nos = [number for number in Uae_nos if number.startswith('+971')]
+    uploaded_file = st.file_uploader("Upload CSV File", type=["csv"])
+    st.write(uploaded_file)
+    print(uploaded_file)
+    if uploaded_file is not None:
+        st.write("File Uploaded!")
+        a = r"/home/aisoftbuilders/Desktop/PyWhatKit/pywhatkit/ali - test campaign.csv"
+        print(121)
+        print(a)
+        # Process the uploaded CSV file and extract phone numbers
+        process_phone_numbers(a)
+        # Display the formatted phone numbers
+        st.subheader("Formatted Phone Numbers:")
+        st.write(formatted_numbers)
 
-# Print the updated list
-print(Uae_nos)
-numeric_mobile_values = Uae_nos
+        # Input field for custom message
+        user_message = st.text_area("Custom Message (with spaces and indentation)", value=massage)
 
-for i, n in enumerate(numeric_mobile_values):
-    try:
-        if i >= 120:  # Start after the 120th iteration
-            sendwhatmsg_instantly(n, massage, 0, True, 3)
-            print(f"Message sent to {n}")
-    except Exception as e:
-        print(f"Failed to send message to {n} with error: {str(e)}")
-    print(i)
+        # Send messages button
+        if st.button("Send Messages"):
+            if not user_message:
+                st.warning("Please enter a message.")
+            else:
+                send_whatsapp_messages(formatted_numbers, user_message)
+
+if __name__ == "__main__":
+    main()
